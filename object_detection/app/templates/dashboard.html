@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Дашборд{% endblock %}
+{% block content %}
+    <h2>Ваши изображения</h2>
+    <p><a href="{% url 'add_image' %}" class="btn btn-primary">Загрузить новое изображение</a></p>
+    <div class="row">
+        {% for image in images %}
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    {% if image.processed_image_mobilenet or image.processed_image_yolo %}
+                        {% if image.processed_image_mobilenet %}
+                            <h5 class="text-center">MobileNet SSD:</h5>
+                            <img class="card-img-top mb-2" src="{{ image.processed_image_mobilenet.url }}" alt="Обработанное изображение MobileNet">
+                            <p class="card-text">Размер изображения: {{ image.get_image_size.0 }}x{{ image.get_image_size.1 }}</p>
+                            <p>Время обработки: {{ image.processing_time_mobilenet|default:"N/A"|floatformat:2 }} секунд</p>
+                            <ul class="list-group">
+                                {% with image.get_detected_objects as detected_objects %}
+                                    {% if detected_objects.mobilenet %}
+                                        {% for obj in detected_objects.mobilenet %}
+                                            <li class="list-group-item">
+                                                Класс: {{ obj.class }}, Уверенность: {{ obj.confidence|floatformat:2 }}
+                                            </li>
+                                        {% endfor %}
+                                    {% else %}
+                                        <li class="list-group-item">Объекты не обнаружены.</li>
+                                    {% endif %}
+                                {% endwith %}
+                            </ul>
+                        {% endif %}
+                        {% if image.processed_image_yolo %}
+                            <h5 class="text-center">YOLO:</h5>
+                            <img class="card-img-top mb-2" src="{{ image.processed_image_yolo.url }}" alt="Обработанное изображение YOLO">
+                            <p class="card-text">Размер изображения: {{ image.get_image_size.0 }}x{{ image.get_image_size.1 }}</p>
+                            <p>Время обработки: {{ image.processing_time_yolo|default:"N/A"|floatformat:2 }} секунд</p>
+                            <ul class="list-group">
+                                {% with image.get_detected_objects as detected_objects %}
+                                    {% if detected_objects.yolo %}
+                                        {% for obj in detected_objects.yolo %}
+                                            <li class="list-group-item">
+                                                Класс: {{ obj.class }}, Уверенность: {{ obj.confidence|floatformat:2 }}
+                                            </li>
+                                        {% endfor %}
+                                    {% else %}
+                                        <li class="list-group-item">Объекты не обнаружены.</li>
+                                    {% endif %}
+                                {% endwith %}
+                            </ul>
+                        {% endif %}
+                    {% else %}
+                        <img class="card-img-top mb-2" src="{{ image.image.url }}" alt="Загруженное изображение">
+                        <p class="text-center text-muted">Изображение ещё не обработано.</p>
+                    {% endif %}
+                    <div class="card-body text-center">
+                        {% if not image.processed_image_mobilenet %}
+                            <a href="{% url 'process_image' image.id %}" class="btn btn-success mb-2">Обработать MobileNet</a>
+                        {% endif %}
+                        {% if not image.processed_image_yolo %}
+                            <a href="{% url 'process_image' image.id %}" class="btn btn-success mb-2">Обработать YOLO</a>
+                        {% endif %}
+                        <a href="{% url 'delete_image' image.id %}" class="btn btn-danger" onclick="return confirm('Вы уверены, что хотите удалить это изображение?');">Удалить</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
